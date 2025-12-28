@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PrismaService } from 'src/prisma.service';
@@ -75,5 +75,26 @@ export class ProductsService {
     });
 
     return { message: `Product with ID ${id} has been removed.` };
+  }
+
+  async getProductList(ids: number[]) {
+
+    ids = Array.from(new Set(ids));
+
+    const products = await this.prisma.product.findMany({
+      where: {
+        id: { in: ids },
+        available: true,
+      },
+    });
+
+    if (products.length < ids.length) {
+      throw new RpcException({
+        message: `One or more products not found`,
+        status: HttpStatus.BAD_REQUEST,
+      });
+    }
+
+    return products;
   }
 }
